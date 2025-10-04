@@ -1,0 +1,40 @@
+
+datapath: /devdata/heshihuan_data/datasets/BraTS2018_remove0_to_nii_resize128/MICCAI_BraTS_2018_Data_Training
+train_list: datalist/BraTS18/BraTS18_train.txt
+val_list: datalist/BraTS18/BraTS18_val.txt
+snapshot_dir:
+method_name:
+dataname: BRATS2018
+
+reload_path:
+reload_from_checkpoint: False
+input_size: [128,128,128]
+
+
+num_cls: 3
+num_modality: 4
+num_workers: 0
+batch_size: 1
+batch_size_val: 1
+num_gpus:
+local_rank: 0
+print_rank: 0
+
+num_epochs: 200
+num_steps:
+
+optim: adam
+lr_scheduler: PolyLR
+lr: 0.0001
+learning_rate_fate: 0.01
+weight_decay: 0.0005
+momentum: 0.9
+power: 0.9
+
+
+weight_std: True
+ignore_label: 255
+is_training: True
+random_mirror: True
+random_scale: True
+mode: random   # 0 , 1, 2,3  random
