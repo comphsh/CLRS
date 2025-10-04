@@ -37,4 +37,4 @@ ignore_label: 255
 is_training: True
 random_mirror: True
 random_scale: True
-mode: random   # 0 , 1, 2,3  random
+mode: random

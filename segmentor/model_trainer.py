@@ -207,7 +207,7 @@ def train(args=None, train_loader=None, val_loader=None, writer=None, masks=None
 
                 shared_map = torch.cat((shared_map[0],shared_map[1],shared_map[2],shared_map[3] ), dim=0).unsqueeze(0).detach()
 
-                # feature_list[-1] += shared_map
+                feature_list[-1] += shared_map
 
 
                 total_loss += loss_synthsis
@@ -384,10 +384,6 @@ def synthesize_modality(images=None , model_spec_list=None , loss_construct_fn=N
     supervised_order = supervised_order_matrix[first_index]
 
     torch.autograd.set_detect_anomaly(True)
-
-    for item in images:
-        print(item.shape,type(item))
-    print(type(images))
 
     loss_reconst_list = []
 

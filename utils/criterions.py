@@ -49,36 +49,36 @@ def softmax_loss(output, target, num_cls=5):
     return cross_loss
 
 def FocalLoss(output, target, alpha=0.25, gamma=2.0):
-    target[target == 4] = 3 # label [4] -> [3]
-    # target = expand_target(target, n_class=output.size()[1]) # [N,H,W,D] -> [N,4,H,W,D]
+    target[target == 4] = 3
+
     if output.dim() > 2:
-        output = output.view(output.size(0), output.size(1), -1)  # N,C,H,W,D => N,C,H*W*D
-        output = output.transpose(1, 2)  # N,C,H*W*D => N,H*W*D,C
-        output = output.contiguous().view(-1, output.size(2))  # N,H*W*D,C => N*H*W*D,C
+        output = output.view(output.size(0), output.size(1), -1)
+        output = output.transpose(1, 2)
+        output = output.contiguous().view(-1, output.size(2))
     if target.dim() == 5:
         target = target.contiguous().view(target.size(0), target.size(1), -1)
         target = target.transpose(1, 2)
         target = target.contiguous().view(-1, target.size(2))
     if target.dim() == 4:
-        target = target.view(-1) # N*H*W*D
-    # compute the negative likelyhood
+        target = target.view(-1)
+
+
     logpt = -F.cross_entropy(output, target)
     pt = torch.exp(logpt)
-    # compute the loss
+
     loss = -((1 - pt) ** gamma) * logpt
-    # return loss.sum()
+
     return loss.mean()
 
-def dice(output, target,eps =1e-5): # soft dice loss
+def dice(output, target,eps =1e-5):
     target = target.float()
-    # num = 2*(output*target).sum() + eps
+
     num = 2*(output*target).sum()
     den = output.sum() + target.sum() + eps
     return 1.0 - num/den
 
 def sigmoid_dice_loss(output, target,alpha=1e-5):
-    # output: [-1,3,H,W,T]
-    # target: [-1,H,W,T] noted that it includes 0,1,2,4 here
+
     loss1 = dice(output[:,0,...],(target==1).float(),eps=alpha)
     loss2 = dice(output[:,1,...],(target==2).float(),eps=alpha)
     loss3 = dice(output[:,2,...],(target == 4).float(),eps=alpha)
@@ -87,8 +87,7 @@ def sigmoid_dice_loss(output, target,alpha=1e-5):
 
 
 def softmax_dice_loss(output, target,eps=1e-5): #
-    # output : [bsize,c,H,W,D]
-    # target : [bsize,H,W,D]
+
     loss1 = dice(output[:,1,...],(target==1).float())
     loss2 = dice(output[:,2,...],(target==2).float())
     loss3 = dice(output[:,3,...],(target==4).float())
@@ -97,15 +96,14 @@ def softmax_dice_loss(output, target,eps=1e-5): #
     return loss1+loss2+loss3
 
 
-# Generalised Dice : 'Generalised dice overlap as a deep learning loss function for highly unbalanced segmentations'
-def GeneralizedDiceLoss(output,target,eps=1e-5,weight_type='square'): # Generalized dice loss
+def GeneralizedDiceLoss(output,target,eps=1e-5,weight_type='square'):
     """
         Generalised Dice : 'Generalised dice overlap as a deep learning loss function for highly unbalanced segmentations'
     """
 
-    # target = target.float()
+
     if target.dim() == 4:
-        target[target == 4] = 3 # label [4] -> [3]
+        target[target == 4] = 3
         target = expand_target(target, n_class=output.size()[1]) # [N,H,W,D] -> [N,4，H,W,D]
 
     output = flatten(output)[1:,...] # transpose [N,4，H,W,D] -> [4，N,H,W,D] -> [3, N*H*W*D] voxels

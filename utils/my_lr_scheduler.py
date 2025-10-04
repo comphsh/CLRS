@@ -7,25 +7,6 @@ import logging
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
-# class PolyLR(_LRScheduler):
-#     def __init__(self, optimizer, max_epochs, power=0.9, min_lr=1e-6, last_epoch=-1):
-#         self.power = power
-#         self.max_epochs = max_epochs  # 只使用 max_epochs
-#         self.min_lr = min_lr
-#         super().__init__(optimizer, last_epoch)  #自动存储了 初始学习率 self.base_lrs
-#
-#     def get_lr(self):
-#         # 正确处理多个参数组
-#         return [
-#             max(base_lr * (1 - self.last_epoch / self.max_epochs) ** self.power, self.min_lr)
-#             for base_lr in self.base_lrs  # 使用 self.base_lrs
-#         ]
-#
-#     def step(self, epoch=None):  # 添加 step 方法
-#         if epoch is None:
-#             epoch = self.last_epoch + 1
-#         self.last_epoch = epoch  # 更新 last_epoch
-#         super().step(epoch)  # 调用父类的 step 方法 (很重要)
 
 def lr_schedule_election(model , args):
     # optimizer selection
@@ -43,7 +24,7 @@ def lr_schedule_election(model , args):
     else:
         exit('not found optimizer !!!')
 
-    # lr scheduler selection
+
     if args.lr_scheduler == 'PolyLR':
         lambda_poly = lambda epoch: (1 - epoch / args.num_epochs) ** 0.9
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_poly)

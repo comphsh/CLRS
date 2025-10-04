@@ -17,7 +17,6 @@ from monai.utils.misc import set_determinism
 from segmentor import  model_trainer
 import torch.distributed as dist
 
-# 现在初始化参数解析器
 def setup_args():
     dos_param = argparse.ArgumentParser()
     dos_param.add_argument("--run_times", default=1, type=int)
@@ -29,10 +28,8 @@ def setup_args():
     dos_param.add_argument('--local_rank', "--local-rank", default=0, type=int)
 
 
-    # 使用 parse_known_args() 来忽略 torchrun 传递的额外参数
     dos_args, unknown = dos_param.parse_known_args()
 
-    # 设置 GPU 和 local_rank
     os.environ['CUDA_VISIBLE_DEVICES'] = dos_args.gpu
     dos_args.local_rank = int(os.environ.get('LOCAL_RANK', 0))
 

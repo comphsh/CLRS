@@ -61,11 +61,9 @@ def get_train_transform(patch_size):
 
 def my_collate(batch):
     image, label = zip(*batch)
-    # (1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
-    # print(np.array(image).shape , np.array(label).shape)
+
     image = np.stack(image, 0)
     label = np.stack(label, 0)
-    # print(image.shape, label.shape)  #(1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
 
     data_dict = {'image': image, 'label':label}
     tr_transforms = get_train_transform(patch_size=image.shape[2:])
@@ -111,7 +109,7 @@ class BraTSDataSet(data.Dataset):
 
             label_file = filepath + '_seg_onehot.npy'
             name = osp.splitext(osp.basename(filepath))[0]
-            # print("naem= {}".format(name))
+
             self.files.append({
                 "flair": flair_file,
                 "t1": t1_file,
@@ -133,8 +131,8 @@ class BraTSDataSet(data.Dataset):
         return len(self.files)
 
 
-    def __getitem__(self, index):  # for locate bbx with scale
-        # tt1 = time.time()
+    def __getitem__(self, index):
+
         if index not in self.fileid_list:
             datafiles = self.files[index]
 
@@ -148,8 +146,8 @@ class BraTSDataSet(data.Dataset):
             image = image.astype(np.float32)
             label = label.astype(np.float32)
 
-            image = image.transpose((0, 3, 1, 2))  # Channel x Depth x H x W
-            label = label.transpose((0, 3, 1, 2))  # Depth x H x W
+            image = image.transpose((0, 3, 1, 2))
+            label = label.transpose((0, 3, 1, 2))
 
 
             if image.shape[1] < self.crop_size[0] or image.shape[2] < self.crop_size[1] or image.shape[3] < self.crop_size[2]:

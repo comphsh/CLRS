@@ -64,11 +64,9 @@ def get_train_transform(patch_size):
 
 def my_collate(batch):
     image, label = zip(*batch)
-    # (1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
-    # print(np.array(image).shape , np.array(label).shape)
+
     image = np.stack(image, 0)
     label = np.stack(label, 0)
-    # print(image.shape, label.shape)  #(1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
 
     data_dict = {'image': image, 'label':label}
     tr_transforms = get_train_transform(patch_size=image.shape[2:])
@@ -102,8 +100,8 @@ class ProstateDataSet(data.Dataset):
 
         self.files = []
         for item in self.img_ids:
-            # /devdata/heshihuan_data/datasets/BraTS2018/MICCAI_BraTS_2018_Data_Training/HGG/Brats18_TCIA08_436_1
-            filepath = item + '/' +  osp.basename(item)  #osp.basename(item):获取当前子文件夹名
+
+            filepath = item + '/' +  osp.basename(item)
             multimodal_file = filepath + '_T2_ADC_normalize.npy'
             if output_class_num == 2:
                 label_file = filepath + '_seg_onehot.npy'
@@ -112,8 +110,8 @@ class ProstateDataSet(data.Dataset):
             else:
                 raise ValueError('not found class_num')
 
-            name = osp.splitext(osp.basename(filepath))[0]  #分离分离文件名 + .extension扩展名
-            # print("naem= {}".format(name))
+            name = osp.splitext(osp.basename(filepath))[0]
+
             self.files.append({
                 "multimodal": multimodal_file,
                 "label": label_file,
@@ -132,16 +130,13 @@ class ProstateDataSet(data.Dataset):
         return len(self.files)
 
 
-    def __getitem__(self, index):  # for locate bbx with scale
-        # tt1 = time.time()
+    def __getitem__(self, index):
+
         if index not in self.fileid_list:
             datafiles = self.files[index]
             image = np.load(datafiles['multimodal'])
             label = np.load(datafiles['label'])
-            # tt1_2 = time.time()
 
-            # image = image.transpose((0, 3, 1, 2))  # Prostate不需要转置
-            # label = label.transpose((0, 3, 1, 2))
 
             if image.shape[1] <= self.crop_size[0] or image.shape[2] <= self.crop_size[1] or image.shape[3] <= self.crop_size[2]:
                 pd_left = (self.crop_size[0] - image.shape[1]) // 2
@@ -160,16 +155,10 @@ class ProstateDataSet(data.Dataset):
             self.label_list.append(label)
             self.fileid_list[index] = self.pointer
             self.pointer += 1
-            # tt1_3 = time.time()
+
         else:
             image = self.image_list[self.fileid_list[index]]
             label = self.label_list[self.fileid_list[index]]
-
-
-        # tt2 = time.time()
-
-        # print("2 image {}  label {}  ".format(image.shape, label.shape ))  # #image=(2, 20, 320, 320)  label=(2, 20, 320, 320)
-        # print("2 unique image {}  label {}  ".format(np.unique(image), np.unique(label) ))
 
         sample = {'image' : image , 'label' : label}
         sample = self.train_transforms(sample)
@@ -177,13 +166,7 @@ class ProstateDataSet(data.Dataset):
         image = sample['image']
         label = sample['label']
 
-
-        # 6 image (2, 16, 128, 128)  label (2, 16, 128, 128)
-        # 6 unique image [-1.3606019 -1.3569915 -1.3533812 ...  3.5566843  3.5891774  3.6325014]  label [0. 1.]
-        # print("6 image {}  label {}   ".format(image.shape, label.shape ))
-        # print("6 unique image {}  label {} ".format(np.unique(image), np.unique(label)  ))
-
-        image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8)  # adapt to CircleVNet
+        image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8)
 
         image = image.astype(np.float32)
         label = label.astype(np.float32)
@@ -204,9 +187,6 @@ class ProstateValDataSet(data.Dataset):
 
         for dirname in open(os.path.join(proj_path, self.list_path)):
             self.img_ids.append( os.path.join(self.data_root, dirname.strip()))
-
-        # 57个患者用来验证  /devdata/heshihuan_data/datasets/BraTS2018/MICCAI_BraTS_2018_Data_Training/HGG/Brats18_CBICA_AQQ_1
-        # print("valset len={}  list:{}".format( len(self.img_ids) , self.img_ids[:10]))
 
         self.files = []
         for item in self.img_ids:
@@ -249,9 +229,6 @@ class ProstateValDataSet(data.Dataset):
             name = datafiles["name"]
             affine = np.load(datafiles['affine'])
 
-            # image = image.transpose((0, 3, 1, 2))  # Prostate不需要转置
-            # label = label.transpose((0, 3, 1, 2))
-
             if image.shape[1] <= self.crop_size[0] or image.shape[2] <= self.crop_size[1] or image.shape[3] <= self.crop_size[2]:
                 pd_left = (self.crop_size[0] - image.shape[1]) // 2
                 pd_right = (self.crop_size[0] - image.shape[1]) - pd_left
@@ -278,91 +255,8 @@ class ProstateValDataSet(data.Dataset):
 
         size = image.shape[1:]
 
-        image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8) # adapt to CircleVNet
-        # image -> res
-        cha, dep, hei, wei = image.shape  #没有裁剪翻转
-        image_copy = np.zeros((cha, dep, hei, wei)).astype(np.float32)
-        image_copy[:, 1:, :, :] = image[:, 0:dep - 1, :, :]
-        image_res = image - image_copy
-        image_res[:, 0, :, :] = 0
-        image_res = np.abs(image_res)
+        image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8)
 
-        # 原始图像、差分图像、标签、图像大小、文件名和仿射矩阵
-        return image, image_res, label, np.array(size), name, affine
-
-
-class ProstateEvalDataSet(data.Dataset):
-    def __init__(self, root='', list_path='', crop_size=(80, 128, 128)):
-        self.data_root = root
-        self.list_path = list_path
-        self.crop_size = crop_size
-        self.img_name = [(self.data_root + i_id.strip()).split() for i_id in open(self.list_path)]
-        self.files = []
-        for item in self.img_name:
-            filepath = item[0] + '/' + osp.splitext(osp.basename(item[0]))[0]
-            # flair_file = filepath + '_flair.nii.gz'  # BraTS20
-            # t1_file = filepath + '_t1.nii.gz'
-            # t1ce_file = filepath + '_t1ce.nii.gz'
-            # t2_file = filepath + '_t2.nii.gz'
-            # label_file = filepath + '_seg.nii.gz'
-
-            multimodal_file = filepath + '_T2_ADC_normalize.npy'
-            affine_file = filepath + '_affine.npy'
-            name = osp.splitext(osp.basename(filepath))[0]
-            self.files.append({
-                "multimodal": multimodal_file,
-                "affine": affine_file,
-                "name": name,
-            })
-        print('EvalSet {} images are loaded!'.format(len(self.img_name)))
-
-        self.image_list = []
-        self.affine_list = []
-        self.name_list = []
-        self.fileid_list = {}
-        self.pointer = 0
-
-    def __len__(self):
-        return len(self.files)
-
-    def __getitem__(self, index):
-
-        if index not in self.fileid_list:
-            datafiles = self.files[index]
-            image = np.load(datafiles['multimodal']) ### 4x150x240x240 or cropped 4x137x145x151
-            name = datafiles["name"]
-            affine = np.load(datafiles['affine'])
-
-            # image = image.transpose((0, 3, 1, 2))  # Prostate不需要转置
-            # label = label.transpose((0, 3, 1, 2))
-
-            if image.shape[1] <= self.crop_size[0] or image.shape[2] <= self.crop_size[1] or image.shape[3] <= self.crop_size[2]:
-                pd_left = (self.crop_size[0] - image.shape[1]) // 2
-                pd_right = (self.crop_size[0] - image.shape[1]) - pd_left
-                ph_left = (self.crop_size[1] - image.shape[2]) // 2
-                ph_right = (self.crop_size[1] - image.shape[2]) - ph_left
-                pw_left = (self.crop_size[2] - image.shape[3]) // 2
-                pw_right = (self.crop_size[2] - image.shape[3]) - pw_left
-                image = np.pad(image, [(0, 0), (pd_left, pd_right), (ph_left, ph_right), (pw_left, pw_right)],
-                               mode='constant', constant_values=0)
-
-
-            self.image_list.append(image)
-            self.affine_list.append(affine)
-            self.name_list.append(name)
-            self.fileid_list[index] = self.pointer
-            self.pointer += 1
-        else:
-            image = self.image_list[self.fileid_list[index]]
-            affine = self.affine_list[self.fileid_list[index]]
-            name = self.name_list[self.fileid_list[index]]
-
-        datafiles = self.files[index]
-
-        size = image.shape[1:]
-
-        image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8) # adapt to CircleVNet
-        # image -> res
         cha, dep, hei, wei = image.shape
         image_copy = np.zeros((cha, dep, hei, wei)).astype(np.float32)
         image_copy[:, 1:, :, :] = image[:, 0:dep - 1, :, :]
@@ -370,6 +264,7 @@ class ProstateEvalDataSet(data.Dataset):
         image_res[:, 0, :, :] = 0
         image_res = np.abs(image_res)
 
-        return image.copy(), image_res.copy(), np.array(size), name, affine
+        return image, image_res, label, np.array(size), name, affine
+
 
 

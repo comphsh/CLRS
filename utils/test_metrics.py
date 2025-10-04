@@ -174,7 +174,7 @@ def cal_mean_std_median_quantile(val_list):
 
     return val_list
 
-def cal_mean_std_median_quantile_total_inf_nan_valid(val_list, handle_inf='ignore', max_hd=None): # maxvalue of hausdorff
+def cal_mean_std_median_quantile_total_inf_nan_valid(val_list, handle_inf='ignore', max_hd=None):
 
     arr = np.array(val_list, dtype=np.float64)
     # 处理 inf

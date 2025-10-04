@@ -20,13 +20,12 @@ class Downsampling(nn.Module):
                               stride=stride, padding=padding)
         self.post_norm = post_norm(out_channels) if post_norm else nn.Identity()
 
-    def forward(self, x): # pre norm --> (permute) --> downsample(conv) --> post norm
-        x = self.pre_norm(x) # input shape: [B, C, H, W, D]
+    def forward(self, x):
+        x = self.pre_norm(x)
         if self.pre_permute:
-            # if take [B, H, W, C] as input, permute it to [B, C, H, W]
             x = x.permute(0, 4, 1, 2, 3).contiguous()
         x = self.conv(x)
-        x = x.permute(0, 2, 3, 4, 1).contiguous() # # [B, C, H, W, D] -> # [B, H, W, D, C]
+        x = x.permute(0, 2, 3, 4, 1).contiguous()
         x = self.post_norm(x)
         return x
 
@@ -88,7 +87,7 @@ class Pooling(nn.Module):
             pool_size, stride=1, padding=pool_size//2, count_include_pad=False)
 
     def forward(self, x):
-        y = x.permute(0, 4, 1, 2, 3).contiguous() # input shape: [B, H, W, D, C]
+        y = x.permute(0, 4, 1, 2, 3).contiguous()
         y = self.pool(y)
         y = y.permute(0, 2, 3, 4, 1).contiguous()
         return y - x
@@ -186,12 +185,12 @@ class SepConv(nn.Module):
         self.act2 = act2_layer()
         self.pwconv2 = nn.Linear(med_channels, dim, bias=bias)
 
-    def forward(self, x): # fc(dim --> dim*expansion_ratio) --> act1 --> DWConv --> act2 --> fc(dim*expansion_ratio --> dim)
-        x = self.pwconv1(x) # input shape: [B, H, W, D, C]
+    def forward(self, x):
+        x = self.pwconv1(x)
         x = self.act1(x)
-        x = x.permute(0, 4, 1, 2, 3) # [B, H, W, D, C] --> [B, C, H, W, D]
+        x = x.permute(0, 4, 1, 2, 3)
         x = self.dwconv(x)
-        x = x.permute(0, 2, 3, 4, 1) # [B, C, H, W, D] --> [B, H, W, D, C]
+        x = x.permute(0, 2, 3, 4, 1)
         x = self.act2(x)
         x = self.pwconv2(x)
         return x
@@ -309,7 +308,7 @@ class Encoder(nn.Module):
         if not isinstance(downsample_layers, (list, tuple)):
             downsample_layers = [downsample_layers] * num_stage
 
-        down_dims = [in_chans] + dims # [4, 32, 64, 128, 256]
+        down_dims = [in_chans] + dims
 
         self.downsample_layers = nn.ModuleList(
             [downsample_layers[i](down_dims[i], down_dims[i+1]) for i in range(num_stage)]
@@ -365,7 +364,7 @@ class Encoder(nn.Module):
 
             x = self.stages[i](x)
 
-            intmd_output[i] = x.permute(0, 4, 1, 2, 3).contiguous() # (B, H, W, D, C) -> (B, C, H, W, D)
+            intmd_output[i] = x.permute(0, 4, 1, 2, 3).contiguous()
         return intmd_output[3], intmd_output
 
     def forward(self, x):
@@ -415,7 +414,7 @@ class Decoder(nn.Module):
             upsample_layers = [upsample_layers] * num_stage
 
 
-        up_dims = [in_chans] + dims # [256, 128, 64, 32, 16]
+        up_dims = [in_chans] + dims
 
         self.upsample_layers = nn.ModuleList(
             [upsample_layers[i](in_channels=up_dims[i], out_channels=up_dims[i+1]) for i in range(num_stage+1)]
@@ -467,18 +466,18 @@ class Decoder(nn.Module):
         for i in range(self.num_stage):
 
 
-            x = self.upsample_layers[i](x, intmd_output[2-i]) # (B, C, H, W, D)
+            x = self.upsample_layers[i](x, intmd_output[2-i])
 
 
-            x = x.permute(0, 2, 3, 4, 1) # (B, C, H, W, D) -> (B, H, W, D, C)
+            x = x.permute(0, 2, 3, 4, 1)
             x = self.stages[i](x)
 
 
-            x = x.permute(0, 4, 1, 2, 3) # (B, H, W, D, C) -> (B, C, H, W, D)
+            x = x.permute(0, 4, 1, 2, 3)
 
 
 
-        x = self.upsample_layers[-1](x) # (B, C, H, W, D)
+        x = self.upsample_layers[-1](x)
 
 
         return x

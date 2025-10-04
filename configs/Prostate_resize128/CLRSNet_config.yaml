@@ -52,4 +52,4 @@ random_scale: True
 norm_cfg: BN
 activation_cfg: LeakyReLU
 train_only: False
-mode: random   # 0 , 1, 2,3  random
+mode: random

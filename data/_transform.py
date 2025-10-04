@@ -63,17 +63,6 @@ class MyCompose:
         return data
 
 class batchgenerator_Compose(AbstractTransform):
-    """Composes several transforms together.
-
-    Args:
-        transforms (list of ``Transform`` objects): list of transforms to compose.
-
-    Example:
-        >>> transforms.Compose([
-        >>>     transforms.CenterCrop(10),
-        >>>     transforms.ToTensor(),
-        >>> ])
-    """
 
     def __init__(self, transforms):
         self.transforms = transforms
@@ -272,10 +261,8 @@ class RandomCrop3D_Circle1(object):
         self.crop_d , self.crop_h , self.crop_w = output_size[0] , output_size[1] , output_size[2]
         self.scale = scale
 
-    def __call__(self, image, label): # image=(4, 141, 131, 173)  label=(3, 141, 131, 173) output_size=[80,160,160]
-        # randomly scale imgs
-        # label=== (2, 128, 128, 128) (3, 128, 128, 128)
-        # print("label===", image.shape, label.shape)
+    def __call__(self, image, label):
+
         [d0, d1, h0, h1, w0, w1] , [pd0,pd1,ph0,ph1,pw0,pw1] , scale_flag = self.locate_bbx_wScale(label)
 
 
@@ -293,7 +280,7 @@ class RandomCrop3D_Circle1(object):
 
         return {'image': image, 'label': label}
 
-    def locate_bbx_wScale(self, label):  #[3,155,240,240] , unique=[0,1]
+    def locate_bbx_wScale(self, label):
         # randomly scale imgs
         scale_flag = False
         scaler = 1
@@ -349,10 +336,10 @@ class RandomCrop3D_Circle1(object):
             d1 = d0 + scale_d
             h1 = h0 + scale_h
             w1 = w0 + scale_w
-            # print("random upper crop!")
+
 
         if d0 < 0:
-            pd0 = 0 - d0  # 填充0的数量
+            pd0 = 0 - d0
             d0 = 0
         else:
             pd0 = 0
@@ -389,22 +376,18 @@ class RandomCrop3D_Circle1(object):
         # h1 = np.min([h1, img_h])
         # w0 = np.max([w0, 0])
         # w1 = np.min([w1, img_w])
-        # print("crop_coord={}   paded_list={}".format([d0, d1, h0, h1, w0, w1]  , [pd0,pd1,ph0,ph1,pw0,pw1]))
+
         return [d0, d1, h0, h1, w0, w1] , [pd0,pd1,ph0,ph1,pw0,pw1] ,scale_flag
 
 
 class RandomResize3D_Circle1(object):
-    """
-    Crop randomly the image in a sample
-    Args:
-    output_size (int): Desired output size
-    """
+
 
     def __init__(self, output_size=[128,128,128] , scale=True):  #[80,160,160]
         self.crop_d , self.crop_h , self.crop_w = output_size[0] , output_size[1] , output_size[2]
         self.scale = scale
 
-    def __call__(self, image, label): # image=(4, 141, 131, 173)  label=(3, 141, 131, 173) output_size=[80,160,160]
+    def __call__(self, image, label):
         if image.shape[1]!=self.crop_d or image.shape[2]!=self.crop_h or image.shape[3]!=self.crop_w:
             image = resize(image, (4, self.crop_d, self.crop_h, self.crop_w), order=1, mode='constant', cval=0, clip=True, preserve_range=True)
             label = resize(label, (3, self.crop_d, self.crop_h, self.crop_w), order=0, mode='edge', cval=0, clip=True, preserve_range=True)
@@ -413,13 +396,8 @@ class RandomResize3D_Circle1(object):
 
 
 
-# ShaSpec
 class RandomCrop3D_SS(object):
-    """
-    Crop randomly the image in a sample
-    Args:
-    output_size (int): Desired output size
-    """
+
 
     def __init__(self, output_size=[80,160,160] , scale=True):  #[80,160,160]
         self.crop_d , self.crop_h , self.crop_w = output_size[0] , output_size[1] , output_size[2]
@@ -440,9 +418,9 @@ class RandomCrop3D_SS(object):
 
         return {'image': image, 'label': label}
 
-    def locate_bbx_wScale(self, label):  #[3,155,240,240] , unique=[0,1]
+    def locate_bbx_wScale(self, label):
 
-        # randomly scale imgs
+
         scale_flag = False
         if self.scale and np.random.uniform() < 0.5:
             scaler = np.random.uniform(0.9, 1.1)
@@ -527,11 +505,7 @@ class RandomCrop3D_SS(object):
 
 
 class RandomMirror3D_SS(object):
-    """
-    Crop randomly the image in a sample
-    Args:
-    output_size (int): Desired output size
-    """
+
 
     def __init__(self):
         pass
@@ -566,16 +540,12 @@ class RandomMirror3D_SS(object):
         return {'image': image, 'label': label}
 
 class Truncate3D_SS(object):
-    """
-    Crop randomly the image in a sample
-    Args:
-    output_size (int): Desired output size
-    """
+
 
     def __init__(self ):
         pass
 
-    def __call__(self, image):  #image , numpy
+    def __call__(self, image):
         MRI = image
         Hist, _ = np.histogram(MRI, bins=int(MRI.max()))  #
 
@@ -594,18 +564,13 @@ class Truncate3D_SS(object):
 
 
         MRI = np.where(MRI != sig, MRI / np.std(MRI[MRI != sig] + 1e-7), 0 * MRI)
-        # np.where(condition, x, y)：：condition: 一个布尔数组，决定如何选择元素。x: 在 condition 为 True 时的值 。y: 在 condition 为 False的值。
 
 
         return MRI
 
 
 class LabelToOnehot3D_BraTS2018(object):
-    """
-    Crop randomly the image in a sample
-    Args:
-    output_size (int): Desired output size
-    """
+
 
     def __init__(self ):
         pass
@@ -672,9 +637,7 @@ class ToTensor:
         sample = {'image': F.to_tensor(sample['image']),
                   'label': torch.from_numpy(np.array(sample['label'])).unsqueeze(0)}
 
-        # print("2 to tensor sample['image'] = {}  {}".format(np.array(sample['image']).shape, np.unique(sample['image'])))
-        # print("2 to tensor sample['label'] = {}  {}".format(np.array(sample['label']).shape, np.unique(sample['label'])))
-        # exit()
+
         return sample
 
     def __repr__(self):
@@ -741,8 +704,7 @@ class Resize(T.Resize):
     def forward(self, sample):
         sample['image'] = F.resize(sample['image'], self.size, self.interpolation)
         sample['label'] = F.resize(sample['label'], self.size, self.interpolation)
-        # print("afsample['image'] = {}  {}".format(np.array(sample['image']).shape, np.unique(sample['image'])))  # [224，224，chnns]
-        # print("af sample['label'] = {}  {}".format(np.array(sample['label']).shape, np.unique(sample['label'])))
+
         return sample
 
 

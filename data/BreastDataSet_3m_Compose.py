@@ -64,11 +64,9 @@ def get_train_transform(patch_size):
 
 def my_collate(batch):
     image, label = zip(*batch)
-    # (1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
-    # print(np.array(image).shape , np.array(label).shape)
+
     image = np.stack(image, 0)
     label = np.stack(label, 0)
-    # print(image.shape, label.shape)  #(1, 4, 80, 160, 160) (1, 3, 80, 160, 160)
 
     data_dict = {'image': image, 'label':label}
     tr_transforms = get_train_transform(patch_size=image.shape[2:])
@@ -131,8 +129,8 @@ class BreastDataSet(data.Dataset):
         return len(self.files)
 
 
-    def __getitem__(self, index):  # for locate bbx with scale
-        # tt1 = time.time()
+    def __getitem__(self, index):
+
         if index not in self.fileid_list:
             datafiles = self.files[index]
             imageNII1 = nib.load(datafiles['modal1'])
@@ -145,12 +143,11 @@ class BreastDataSet(data.Dataset):
             image = image.astype(np.float32)
             label = label.astype(np.int32)
 
-            # image = (2, 128, 128, 128)  label=(3, 128, 128, 128) ..
-            # print("image = {}  label={} .. ".format(image.shape , label.shape))
+
             image = image.transpose((0, 3, 1, 2))
             label = label.transpose((0, 3, 1, 2))
 
-            # tt1_2 = time.time()
+
 
             if image.shape[1] < self.crop_size[0] or image.shape[2] < self.crop_size[1] or image.shape[3] < self.crop_size[2]:
                 pd_left = (self.crop_size[0] - image.shape[1]) // 2
@@ -168,16 +165,11 @@ class BreastDataSet(data.Dataset):
             self.label_list.append(label)
             self.fileid_list[index] = self.pointer
             self.pointer += 1
-            # tt1_3 = time.time()
+
         else:
             image = self.image_list[self.fileid_list[index]]
             label = self.label_list[self.fileid_list[index]]
 
-
-        # tt2 = time.time()
-
-        # print("2 image {}  label {}  ".format(image.shape, label.shape ))  # #image=(2, 20, 320, 320)  label=(2, 20, 320, 320)
-        # print("2 unique image {}  label {}  ".format(np.unique(image), np.unique(label) ))
 
         sample = {'image' : image , 'label' : label}
         sample = self.train_transforms(sample)

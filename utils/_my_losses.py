@@ -54,7 +54,7 @@ def cal_bce_trick_for_value_stable(logits, target, num_cls):
         loss_i = torch.sum(val_i)
         loss += loss_i
 
-    num_elements = torch.numel(logits)  # 除以 [B,C,H,W,D]
+    num_elements = torch.numel(logits)
     loss = loss / num_elements
 
     return loss
@@ -80,7 +80,7 @@ def cal_bce_trick_for_value_stable_weight(logits, target, num_cls, weight):
         loss_i = torch.sum(val_i)
         loss += loss_i * norm_weight[i]
 
-    num_elements = torch.numel(logits)  # 除以 [B,C,H,W,D]
+    num_elements = torch.numel(logits)
     loss = loss / num_elements
 
     return loss
@@ -91,7 +91,7 @@ def cal_ce_target_onehot_trick_for_value_stable(logits, target, num_cls):
     assert logits.shape == target.shape
     max_vals = torch.max(logits, dim=1, keepdim=True).values  # [B,1,H,W,D]
 
-    stable_logits = logits - max_vals  #stable_logits [B,C,H,W,D]
+    stable_logits = logits - max_vals  #
 
 
     log_probs = stable_logits - torch.log(torch.sum(torch.exp(stable_logits), dim=1, keepdim=True))
